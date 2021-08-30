@@ -1,22 +1,106 @@
 import time
-from threading import Thread, Timer
+from threading import Thread, Timer,current_thread
 from queue import Queue
 from tqdm import tqdm
 
-max_proxies = 10
+max_proxies = 2
 q_proxies = Queue(200)
 q_tasks = Queue(max_proxies)
 sleep_time = 1
 running_state = "on running"
 
+# TODO 需要定义func/validation/函数
+# *****************************
+
+def func(url):
+    err_time = 0
+    item = q_data.get()
+    index = item["index"]
+    category = item["行业类别"]
+    name = item["单位名称"]
+    unique_id = item["许可证编号"]
+    dataid = item["查看"].split("dataid=")[1]
+    path = f'许可信息公开/{category}/{name}{unique_id}/'
+    print("正在下载第%s个文件\n" % index)
+    # 创建文件夹
+    for floder in ["基础信息", "许可证副本", "大气污染物排放信息", "水污染物排放信息", "其他许可内容"]:
+        if not os.path.exists(path + floder):
+            os.makedirs(path + floder)
+    # 分别列出大气,水,其他的url,然后对每一个进行循环
+    base_url = "http://permit.mee.gov.cn/perxxgkinfo/xkgkAction!xkgk.action?xkgk=getxxgkContent&dataid=%s" % dataid
+    air_url = "http://permit.mee.gov.cn/perxxgkinfo/xkgkAction!xkgk.action?xkgk=approveAtmosphere_xkzgk&dataid=%s&isVersion=&operate=readonly" % dataid
+    water_url = "http://permit.mee.gov.cn/perxxgkinfo/xkgkAction!xkgk.action?xkgk=approveWater_xkzgk&dataid=%s&isVersion=&operate=readonly" % dataid
+    other_url = "http://permit.mee.gov.cn/perxxgkinfo/xkgkAction!xkgk.action?xkgk=approveothercon_xkzgk&dataid=%s&operate=readonly" % dataid
+    flag = True
+    while True:
+        if err_time > 10:
+            data.loc[index, "副本下载状态"] = 3
+            break
+        try:
+            #  下载副本文件
+            url_base = "http://permit.mee.gov.cn/perxxgkinfo/syssb/wysb/hpsp/hpsp-company-sewage!showImage.action?dataid=%s" % dataid
+            # todo 加代理
+            # 分析页面得到id这些内容,再使用他们去获取附件文件的路径,再去下载附件.
+            response = requests.get(url_base, proxies=proxies, timeout=timeout)
+
+            # 获取到的文字是没有重定向且不为空的
+            if response.text == "":
+                data.loc[index, "副本下载状态"] = 3
+                print(f"------------------{index}-----")
+                break
+            elif response.history != []:
+                print("重新定向")
+                proxies, expire_time = q_proxies.get()
+                check()
+                break
+
+            content = bs4.BeautifulSoup(response.text, "html.parser")
+            imageDiv = content.find("body").find("div", id="imageDiv")
+            imgCount = imageDiv.find("input", id="imgCount").get("value")
+            pkid = imageDiv.find("input", id="pkid").get("value")
+            for i in range(1, int(imgCount) + 1):
+                url = f"http://permit.mee.gov.cn/perxxgkinfo/syssb/xkgg/xkgg!downFilePng.action?datafileid={pkid}_{i}&fileType=pdffile&dataid={dataid}"
+                flag = True
+                while True:
+                    img = requests.get(url, proxies=proxies)
+                    if response.text == "":
+                        data.loc[index, "副本下载状态"] = 3
+                        print(f"------------------{index}--------------------------------")
+                        flag = False
+                        break
+                    elif response.history != []:
+                        proxies, expire_time = q_proxies.get()
+                    else:
+                        break
+                if flag:
+                    with open(path + "许可证副本/" + str(i) + ".png", 'wb') as f:
+                        f.write(img.content)
+            break
+        except:
+            proxies, expire_time = q_proxies.get()
+            err_time = err_time + 1
+            check()
+    if not data.loc[index, "副本下载状态"] == 3:
+        data.loc[index, "副本下载状态"] = 2
+    check()
+
+
+    return current_thread().name
+
+
+def validation(content):
+    print(Thread.isAlive(content))
+    return Thread.isAlive(content)
+# ******************************
 
 # 分别启动任务管理器,代理获取器,多个子线程.
 def start(proxies_url, thread_num):
-    task_publisher = Thread(target=get_task(), name="task_publisher", daemon=True)
-    proxies_publisher = Thread(target=get_proxies(proxies_url), name="proxies_publisher")
+    task_publisher = Thread(target=get_task, name="task_publisher", daemon=True)
+    proxies_publisher = Thread(target=get_proxies, name="proxies_publisher",args=proxies_url)
     thread_list = []
     for i in range(0, thread_num):
-        thread_list.append(ThreadTask(func, validation, q_tasks.get(), q_proxies.get()))
+        print(accept_task(), q_proxies.get())
+        thread_list.append(ThreadTask(func, validation, accept_task(), q_proxies.get()))
     for i in thread_list:
         i.start()
     for i in thread_list:
@@ -24,13 +108,7 @@ def start(proxies_url, thread_num):
     print("well done")
 
 
-# todo 需要定义func/validation/函数
-def func():
-    pass
 
-
-def validation():
-    pass
 
 
 # todo 获取任务函数,添加内容到task里
@@ -74,7 +152,7 @@ def get_proxies(proxies_url):
 
 # todo 返回代理的列表,一定确保能返回正确的列表,否则一直循环等待,
 def request_proxies(proxies_url):
-    proxies_list = ?
+    proxies_list = proxies_url
     return proxies_list
 
 
@@ -130,6 +208,6 @@ class ThreadTask(Thread):
 
 
 if "__main__" == __name__:
-    proxies_url = "123"
-    thred_num = 10
+    proxies_url = "proxies_url"
+    thred_num = 2
     start(proxies_url, thred_num)
