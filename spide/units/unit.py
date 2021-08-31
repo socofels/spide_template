@@ -11,7 +11,7 @@ import pandas as pd
 def creat_dir(path):
     """创建目录"""
     if not os.path.exists(path):
-        os.makedirs("22")
+        os.makedirs(path)
 
 
 def read_html(html):

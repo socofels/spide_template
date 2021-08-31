@@ -1,4 +1,4 @@
-from spide.units.nuit import getHeader, xunfei_orc, turn_to_list
+from spide.units.unit import getHeader, xunfei_orc, turn_to_list
 import pandas as pd
 import os
 
@@ -18,4 +18,18 @@ def detect():
                 content = turn_to_list(xunfei_orc(path + "/5.png"))
                 download_list.loc[download_list.index[-1]+1]=[path,0,content]
                 download_list.to_csv(r"F:\PL\ssl\spider_排污许可\data\副本orc识别信息.csv")
-detect()
+
+
+import requests
+from fake_useragent import UserAgent
+
+try:
+
+    headers={"User-Agent":UserAgent().random}
+    proxies={"http":None,"https":None}
+    print(headers)
+    res = requests.get(url="http://www.csres.com/sort/industry.jsp",headers=headers, timeout=3,proxies=proxies)
+
+
+except Exception as e:
+    print(e)
