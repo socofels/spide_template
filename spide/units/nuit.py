@@ -54,7 +54,7 @@ def getHeader():
     return header
 
 
-def xunfei_orc(img_url):
+def xunfei_orc(img_url,headers):
     # 上传文件并进行base64位编码
     with open(img_url, 'rb') as f:
         f1 = f.read()
@@ -62,7 +62,7 @@ def xunfei_orc(img_url):
     data = {
         'image': f1_base64
     }
-    r = requests.post(URL, data=data, headers=getHeader())
+    r = requests.post(URL, data=data, headers=headers)
     result = str(r.content, 'utf-8')
     # 错误码链接：https://www.xfyun.cn/document/error-code (code返回错误码时必看)
     return result
@@ -91,10 +91,9 @@ def turn_to_list(orc_result):
 
 # 遍历文件夹,检测副本是否正确完整
 def detect():
-    xxgk = pd.read_csv("../data/许可信息公开.csv", index_col=0)
+    xxgk = pd.read_csv("F:\PL\ssl\spider_排污许可\许可信息公开.csv", index_col=0)
     for i in xxgk.index:
-        path = f"../许可信息公开/{xxgk.loc[i, '行业类别']}/{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}/许可证副本"
-
+        path = f"F:\PL\ssl\spider_排污许可\许可信息公开/{xxgk.loc[i, '行业类别']}/{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}/许可证副本"
         if not os.path.exists(path):
             xxgk.loc[i, "副本下载状态"] = 0
         elif os.path.exists(path + "/5.png"):
@@ -103,7 +102,7 @@ def detect():
         else:
             xxgk.loc[i, "副本下载状态"] = 0
 
-    xxgk.to_csv("../data/许可信息公开.csv")
+    xxgk.to_csv("../data/许可信息公开000.csv")
 
 
 # 删除空文件夹，空文件
@@ -137,3 +136,4 @@ def clean_empty_dir_and_file(path):
         return
     except FileNotFoundError:
         print("文件夹路径错误")
+
