@@ -1,4 +1,4 @@
-import os
+import os, bs4
 from fake_useragent import UserAgent
 import requests
 import time
@@ -11,7 +11,7 @@ import pandas as pd
 def creat_dir(path):
     """创建目录"""
     if not os.path.exists(path):
-        os.makedirs("22")
+        os.makedirs(path)
 
 
 def read_html(html):
@@ -54,7 +54,7 @@ def getHeader():
     return header
 
 
-def xunfei_orc(img_url,headers):
+def xunfei_orc(img_url):
     # 上传文件并进行base64位编码
     with open(img_url, 'rb') as f:
         f1 = f.read()
@@ -62,7 +62,7 @@ def xunfei_orc(img_url,headers):
     data = {
         'image': f1_base64
     }
-    r = requests.post(URL, data=data, headers=headers)
+    r = requests.post(URL, data=data, headers=getHeader())
     result = str(r.content, 'utf-8')
     # 错误码链接：https://www.xfyun.cn/document/error-code (code返回错误码时必看)
     return result
@@ -91,18 +91,22 @@ def turn_to_list(orc_result):
 
 # 遍历文件夹,检测副本是否正确完整
 def detect():
-    xxgk = pd.read_csv("F:\PL\ssl\spider_排污许可\许可信息公开.csv", index_col=0)
+    xxgk = pd.read_csv("../../data/许可信息公开.csv", index_col=0)
     for i in xxgk.index:
-        path = f"F:\PL\ssl\spider_排污许可\许可信息公开/{xxgk.loc[i, '行业类别']}/{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}/许可证副本"
-        if not os.path.exists(path):
-            xxgk.loc[i, "副本下载状态"] = 0
-        elif os.path.exists(path + "/5.png"):
-            if os.path.getsize(path + "/5.png") == 520:
-                xxgk.loc[i, "副本下载状态"] = 0
-        else:
-            xxgk.loc[i, "副本下载状态"] = 0
+        if xxgk.loc[i, "副本下载状态"] == 0 or xxgk.loc[i, "副本下载状态"] == 1:
+            path = f"../../data/许可信息公开/{xxgk.loc[i, '行业类别']}/{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}/许可证副本"
 
-    xxgk.to_csv("../data/许可信息公开000.csv")
+            if not os.path.exists(path):
+                xxgk.loc[i, "副本下载状态"] = 0
+            elif os.path.exists(path + "/5.png") and os.path.exists(path + "/6.png"):
+                if os.path.getsize(path + "/5.png") == 520 or os.path.getsize(path + "/6.png") == 520:
+                    xxgk.loc[i, "副本下载状态"] = 0
+                else:
+                    xxgk.loc[i, "副本下载状态"] = 2
+            else:
+                xxgk.loc[i, "副本下载状态"] = 0
+
+    xxgk.to_csv("../../data/许可信息公开.csv")
 
 
 # 删除空文件夹，空文件
@@ -137,3 +141,13 @@ def clean_empty_dir_and_file(path):
     except FileNotFoundError:
         print("文件夹路径错误")
 
+
+def GetOuterIP():
+    url = r'http://www.net.cn/static/customercare/yourip.asp'
+
+    r = requests.get(url)
+    # print(r.text)
+    content = bs4.BeautifulSoup(r.text, 'html.parser')
+    ip = content.find("center").find("h2").text
+    return ip
+detect()
