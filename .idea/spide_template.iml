@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/data/许可信息公开/其他纸制品制造/深圳市鸿鑫盛包装制品有限公司91440300754291289J001P" />
       <excludeFolder url="file://$MODULE_DIR$/data/许可信息公开/纸和纸板容器制造/深圳市林祥包装制品有限公司914403000671829296001P" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

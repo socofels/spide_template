@@ -78,17 +78,16 @@ def find_inf(word):
 # 保存到文件
 lock=Lock()
 
-def orc(myrange):
+def orc(csv_dir,data_path):
     headers = getHeader()
-    xxgk = pd.read_csv(f"F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv", index_col=0)
-    # xxgk=xxgk.loc[myrange[0]:]
+    xxgk = pd.read_csv(csv_dir, index_col=0)
     for i in tqdm.tqdm(xxgk.index):
         yb=str(xxgk.loc[i, "邮编"])
         if not pd.isna(xxgk.loc[i, "邮编"]):
             if "518" in yb:
                 continue
         else:
-            path = f"F:\PL\ssl\spider_排污许可\许可信息公开\{xxgk.loc[i, '行业类别']}\{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}\许可证副本"
+            path = f"{data_path}{xxgk.loc[i, '行业类别']}\{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}\许可证副本"
             if os.path.exists(path + "/5.png"):
                 try:
                     size=os.path.getsize(path + "/5.png")
@@ -109,28 +108,29 @@ def orc(myrange):
                                     xxgk.loc[i, "管理类型"] = find_word[1]
                 except Exception as e:
                     print(e)
-        xxgk.to_csv(f"F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv")
+        xxgk.to_csv(csv_dir)
 
+# F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv
 
-q1=Thread(target=orc,args=([[0,1000]]))
-q2=Thread(target=orc,args=([[1000,2000]]))
-q3=Thread(target=orc,args=([[2000,3000]]))
-q4=Thread(target=orc,args=([[3000,4000]]))
-q5=Thread(target=orc,args=([[4000,5000]]))
-q6=Thread(target=orc,args=([[5000,5270]]))
-
+q1=Thread(target=orc,args=([[1,5270]]))
+# q2=Thread(target=orc,args=([[1000,2000]]))
+# q3=Thread(target=orc,args=([[2000,3000]]))
+# q4=Thread(target=orc,args=([[3000,4000]]))
+# q5=Thread(target=orc,args=([[4000,5000]]))
+# q6=Thread(target=orc,args=([[5000,5270]]))
+#
 q1.start()
-q2.start()
-q3.start()
-q4.start()
-q5.start()
-q6.start()
-
+# q2.start()
+# q3.start()
+# q4.start()
+# q5.start()
+# q6.start()
+#
 q1.join()
-q2.join()
-q3.join()
-q4.join()
-q5.join()
-q6.join()
+# q2.join()
+# q3.join()
+# q4.join()
+# q5.join()
+# q6.join()
 
 
