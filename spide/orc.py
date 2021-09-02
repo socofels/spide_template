@@ -77,43 +77,39 @@ def find_inf(word):
 # 寻找信息，如果找到了邮编信息则保存邮编信息,与管理类型
 # 保存到文件
 lock=Lock()
-def write_data(path,index,column,value):
-    lock.acquire()
-    datafram=pd.read_csv(path)
-    datafram.loc[index,column]=value
-    datafram.to_csv(path)
-    lock.release()
+
 def orc(myrange):
     headers = getHeader()
-    xxgk = pd.read_csv("F:\PL\ssl\spide_template\data\许可信息公开.csv", index_col=0)
-    for i in tqdm.tqdm(range(myrange[0],myrange[1])):
+    xxgk = pd.read_csv(f"F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv", index_col=0)
+    # xxgk=xxgk.loc[myrange[0]:]
+    for i in tqdm.tqdm(xxgk.index):
         yb=str(xxgk.loc[i, "邮编"])
-        if xxgk.loc[i, "副本下载状态"] == 2:
-            if not yb:
-                if "518" in yb:
-                    continue
-            else:
-                path = f"F:\PL\ssl\spider_排污许可\许可信息公开/{xxgk.loc[i, '行业类别']}/{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}/许可证副本"
-                if os.path.exists(path + "/5.png"):
-                    try:
-                        if os.path.getsize(path + "/5.png") != 520:
-                            word = turn_to_list(xunfei_orc(path + "/5.png",headers))
-                            xxgk.loc[i,"第五页"]=str(word)
-                            find_word=find_inf(word)
-                            if find_word:
-                                xxgk.loc[i, "邮编"] = find_word[0]
-                                xxgk.loc[i, "管理类型"] = find_word[1]
-                            else:
-                                if os.path.exists(path + "/6.png"):
-                                    word = turn_to_list(xunfei_orc(path + "/6.png",headers))
-                                    xxgk.loc[i, "第六页"] = str(word)
-                                    find_word = find_inf(word)
-                                    if find_word:
-                                        xxgk.loc[i, "邮编"] = find_word[0]
-                                        xxgk.loc[i, "管理类型"] = find_word[1]
-                    except Exception as e:
-                        print(e)
-            write_data("F:\PL\ssl\spide_template\data\许可信息公开.csv", i, xxgk.loc[i, "邮编"], xxgk.loc[i, "管理类型"])
+        if not pd.isna(xxgk.loc[i, "邮编"]):
+            if "518" in yb:
+                continue
+        else:
+            path = f"F:\PL\ssl\spider_排污许可\许可信息公开\{xxgk.loc[i, '行业类别']}\{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}\许可证副本"
+            if os.path.exists(path + "/5.png"):
+                try:
+                    size=os.path.getsize(path + "/5.png")
+                    if  size!= 520:
+                        word = turn_to_list(xunfei_orc(path + "/5.png",headers))
+                        xxgk.loc[i,"第五页"]=str(word)
+                        find_word=find_inf(word)
+                        if find_word:
+                            xxgk.loc[i, "邮编"] = find_word[0]
+                            xxgk.loc[i, "管理类型"] = find_word[1]
+                        else:
+                            if os.path.exists(path + "/6.png"):
+                                word = turn_to_list(xunfei_orc(path + "/6.png",headers))
+                                xxgk.loc[i, "第六页"] = str(word)
+                                find_word = find_inf(word)
+                                if find_word:
+                                    xxgk.loc[i, "邮编"] = find_word[0]
+                                    xxgk.loc[i, "管理类型"] = find_word[1]
+                except Exception as e:
+                    print(e)
+        xxgk.to_csv(f"F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv")
 
 
 q1=Thread(target=orc,args=([[0,1000]]))
