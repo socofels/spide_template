@@ -5,7 +5,7 @@ from threading import Thread, Timer, current_thread
 from queue import Queue
 from tqdm import tqdm
 from fake_useragent import UserAgent
-from units.unit import creat_dir
+from units.unit import creat_dir,detect,GetOuterIP
 import logging
 
 
@@ -251,7 +251,12 @@ class ThreadTask(Thread):
                     flag = False
                 time.sleep(sleep_time)
         print("线程 %s 已完成所有任务" % threading.currentThread().name)
+import socket
 
+
+def add_ip():
+    ip=GetOuterIP()
+    res=requests.get(f"http://pycn.yapi.3866866.com/index/index/save_white?neek=8887&appkey=7632dd76794bf3462378e3b7286bc70c&white={ip}")
 
 if "__main__" == __name__:
     max_proxies = 1
@@ -261,6 +266,7 @@ if "__main__" == __name__:
     running_state = "on running"
     response_list = []
     logging.debug("start")
-    proxies_url = "http://tiqu.pyhttp.taolop.com/getip?count=1&neek=8887&type=2&yys=0&port=1&sb=&mr=1&sep=0&ts=1&time=2"
-    thred_num = 2
+    proxies_url = "http://tiqu.pyhttp.taolop.com/getip?count=50&neek=8887&type=2&yys=0&port=1&sb=&mr=1&sep=0&ts=1&time=2"
+    thred_num = 50
+    add_ip()
     start(proxies_url, thred_num)
