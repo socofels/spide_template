@@ -33,7 +33,7 @@ def getHeader():
     return header
 
 
-def xunfei_orc(img_url,headers):
+def xunfei_orc(img_url):
     # 上传文件并进行base64位编码
     with open(img_url, 'rb') as f:
         f1 = f.read()
@@ -41,7 +41,7 @@ def xunfei_orc(img_url,headers):
     data = {
         'image': f1_base64
     }
-    r = requests.post(URL, data=data, headers=headers)
+    r = requests.post(URL, data=data, headers=getHeader())
     result = str(r.content, 'utf-8')
     # 错误码链接：https://www.xfyun.cn/document/error-code (code返回错误码时必看)
     return result
@@ -81,18 +81,19 @@ lock=Lock()
 def orc(csv_dir,data_path):
     headers = getHeader()
     xxgk = pd.read_csv(csv_dir, index_col=0)
-    for i in tqdm.tqdm(xxgk.index):
-        yb=str(xxgk.loc[i, "邮编"])
+    for i in tqdm.tqdm(range(1467,xxgk.index[-1]+1)):
+        yb=xxgk.loc[i, "邮编"]
         if not pd.isna(xxgk.loc[i, "邮编"]):
             if "518" in yb:
                 continue
+# C:\Users\fjh\PycharmProjects\spide_template\data\许可信息公开\专用设备制造业\高美可设备配件（深圳）有限公司91440300MA5DQBT126001Y
         else:
-            path = f"{data_path}{xxgk.loc[i, '行业类别']}\{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}\许可证副本"
+            path = f"{data_path}\{xxgk.loc[i, '行业类别']}\{xxgk.loc[i, '单位名称']}{xxgk.loc[i, '许可证编号']}\许可证副本"
             if os.path.exists(path + "/5.png"):
-                try:
+                # try:
                     size=os.path.getsize(path + "/5.png")
-                    if  size!= 520:
-                        word = turn_to_list(xunfei_orc(path + "/5.png",headers))
+                    if  size>5000:
+                        word = turn_to_list(xunfei_orc(path + "/5.png"))
                         xxgk.loc[i,"第五页"]=str(word)
                         find_word=find_inf(word)
                         if find_word:
@@ -100,33 +101,36 @@ def orc(csv_dir,data_path):
                             xxgk.loc[i, "管理类型"] = find_word[1]
                         else:
                             if os.path.exists(path + "/6.png"):
-                                word = turn_to_list(xunfei_orc(path + "/6.png",headers))
-                                xxgk.loc[i, "第六页"] = str(word)
-                                find_word = find_inf(word)
-                                if find_word:
-                                    xxgk.loc[i, "邮编"] = find_word[0]
-                                    xxgk.loc[i, "管理类型"] = find_word[1]
-                except Exception as e:
-                    print(e)
-        xxgk.to_csv(csv_dir)
+                                size=os.path.getsize(path + "/6.png")
+                                if size>5000:
+                                    word = turn_to_list(xunfei_orc(path + "/6.png"))
+                                    xxgk.loc[i, "第六页"] = str(word)
+                                    find_word = find_inf(word)
+                                    if find_word:
+                                        xxgk.loc[i, "邮编"] = find_word[0]
+                                        xxgk.loc[i, "管理类型"] = find_word[1]
+                # except Exception as e:
+                #     print(e)
+            xxgk.to_csv(csv_dir)
 
-# F:\PL\ssl\spide_template\data\许可信息公开{myrange[1]}.csv
-
-q1=Thread(target=orc,args=([[1,5270]]))
+csv_dir=r"C:\Users\fjh\PycharmProjects\spide_template\data\许可信息公开.csv"
+data_path=r"C:\Users\fjh\PycharmProjects\spide_template\data\许可信息公开"
+orc(csv_dir,data_path)
+# q1=Thread(target=orc,args=([[1,5270]]))
 # q2=Thread(target=orc,args=([[1000,2000]]))
 # q3=Thread(target=orc,args=([[2000,3000]]))
 # q4=Thread(target=orc,args=([[3000,4000]]))
 # q5=Thread(target=orc,args=([[4000,5000]]))
 # q6=Thread(target=orc,args=([[5000,5270]]))
 #
-q1.start()
+# q1.start()
 # q2.start()
 # q3.start()
 # q4.start()
 # q5.start()
 # q6.start()
 #
-q1.join()
+# q1.join()
 # q2.join()
 # q3.join()
 # q4.join()
